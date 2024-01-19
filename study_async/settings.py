@@ -29,7 +29,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'usuarios',
-    'flashcard'
+    'flashcard',
+    'apostilas'
 ]
 
 MIDDLEWARE = [

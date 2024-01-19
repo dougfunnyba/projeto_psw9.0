@@ -132,7 +132,19 @@ def listar_desafio(request):
     if request.method == 'GET':
         categorias = Categoria.objects.all()
         dificuldades = FlashCard.DIFICULDADE_CHOICES
-        desafios = Desafio.objects.filter(user = request.user)
+
+        categoria_filter = request.GET.get('categoria')
+        dificuldade_filter = request.GET.get('dificuldade')
+
+        if categoria_filter and not dificuldade_filter:
+            desafios = Desafio.objects.filter(user = request.user).filter(categoria__id = categoria_filter)
+        elif  dificuldade_filter and not categoria_filter:
+            desafios = Desafio.objects.filter(user = request.user).filter(dificuldade = dificuldade_filter)
+        elif categoria_filter and dificuldade_filter:
+            desafios = Desafio.objects.filter(user = request.user).filter(categoria__id = categoria_filter).filter(dificuldade = dificuldade_filter)
+        else:
+            desafios = Desafio.objects.filter(user = request.user)
+
         return render(request,'listar_desafio.html',
                     {
                         'desafios': desafios,
@@ -172,3 +184,28 @@ def responder_flashcard(request, id):
     flashcard_desafio.save()
 
     return redirect(f'/flashcard/desafio/{desafio_id}')
+
+def relatorio(request, id):
+
+    desafio = Desafio.objects.get(id = id)
+    acertos = desafio.flashcards.filter(acertou = True).count()
+    erros = desafio.flashcards.filter(acertou = False).count()
+
+    dados = [acertos, erros]
+
+    categorias = desafio.categoria.all()
+
+    name_categorias = [i.nome for i in categorias] # Criando lista de categorias
+
+    dados_categorias = []
+    for categoria in categorias:
+        dados_categorias.append(desafio.flashcards.filter(flashcard__categoria = categoria).filter(acertou = True).count())
+
+    #TODO: Fazer o Ranking melhores e piores materias
+
+    return render(request, 'relatorio.html', {
+                                                'desafio': desafio,
+                                                'dados': dados,
+                                                'name_categorias': name_categorias,
+                                                'dados_categorias': dados_categorias
+                                                })
